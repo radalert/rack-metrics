@@ -1,40 +1,21 @@
-# myapp.rb
-#require 'sinatra'
+# This simple app shows how to use Rack middle ware to expose metrics for Rad Alert to consume. 
+# Sinatra is used, but you could also use it with rails, see http://karmi.tumblr.com/post/663716963/rack-middleware-examples 
 #
-#get '/' do
-#  'Hello world!'
-#end
 require 'rubygems'
 require 'sinatra'
-
-module Rack
-
-  # Put response time information into the response body
-  # See also http://github.com/ryanb/railscasts-episodes/blob/master/episode-151/store/lib/response_timer.rb
-  #
-  class RadMetrics
-
-    def initialize(app)
-      @app = app
-    end
-
-    def call(env)
-      if (env['REQUEST_PATH'] == "/rad-metrics.json") then
-        [200, {}, ["yeah"]]
-      else
-        @app.call env
-      end
-      
-    end
-
-  end
+require 'json'
+require_relative 'rad_rack'
 
 
-end
 
-# Try to swap the `use ...` lines
-use Rack::RadMetrics
+# Use the rack middleware - this publishes metrics via /rad-metrics.json. 
+# So you can tell Rad Alert to monitor http://yourapp.com/rad-metrics.json 
+use RadRack::RadMetrics
+
 
 get '/' do
-  "Hello, World!"  # ...response
+  # set some metric values
+  RadRack::RadMetrics.update("Temperature", 42.0)
+  RadRack::RadMetrics.update("Bacon eaten", 6)
+  "Hello, World!"  
 end
